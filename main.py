@@ -20,19 +20,17 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     overlay_folder = Path("overlays")
     overlays = list(overlay_folder.glob("*.png"))
     if not overlays:
-        await update.message.reply_text("🚫 ما كاين حتى زر فـ overlays/.")
+        await update.message.reply_text("🚫 مجلد overlays خاوي، ما كايناش صور Play Now.")
         return
 
     selected_overlay = Image.open(random.choice(overlays)).convert("RGBA")
 
     # Detect image orientation
     is_portrait = background.height > background.width
-
-    # Adjust overlay size dynamically
     if is_portrait:
         overlay_width = int(background.width * 0.5)
     else:
-        overlay_width = int(background.width * 0.6)  # larger for landscape
+        overlay_width = int(background.width * 0.6)
 
     overlay_height = int(selected_overlay.height * overlay_width / selected_overlay.width)
     selected_overlay = selected_overlay.resize((overlay_width, overlay_height))
