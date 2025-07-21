@@ -1,46 +1,66 @@
 
 import os
+import logging
 import random
-from pathlib import Path
 from PIL import Image
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Load overlay images
+OVERLAY_DIR = "overlays"
+overlays = [os.path.join(OVERLAY_DIR, f) for f in os.listdir(OVERLAY_DIR) if f.endswith(".png")]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📷 صيفط ليا الصورة، وغادي نزيد ليك زر Play now بلون عشوائي 🎨")
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    photo_file = await update.message.photo[-1].get_file()
-    await photo_file.download_to_drive("input.jpg")
-
-    background = Image.open("input.jpg").convert("RGBA")
-    overlay_folder = Path("overlays")
-    overlays = list(overlay_folder.glob("*.png"))
-
     if not overlays:
-        await update.message.reply_text("🚫 ما كيناش ولا صورة Play Now فالمجلد overlays.")
+        await update.message.reply_text("❌ مكاين حتى زر overlay متاح.")
         return
 
-    selected_overlay = Image.open(random.choice(overlays)).convert("RGBA")
+    photo = update.message.photo[-1]
+    file = await photo.get_file()
+    input_path = "input.jpg"
+    output_path = "output.png"
+    await file.download_to_drive(input_path)
 
-    # Check if image is portrait or landscape
-    is_portrait = background.height > background.width
-    scale_ratio = 0.5 if is_portrait else 0.7
+    image = Image.open(input_path).convert("RGBA")
+    w, h = image.size
 
-    overlay_width = int(background.width * scale_ratio)
-    overlay_height = int(selected_overlay.height * overlay_width / selected_overlay.width)
-    selected_overlay = selected_overlay.resize((overlay_width, overlay_height))
+    # Choose overlay and open it
+    overlay_path = random.choice(overlays)
+    overlay = Image.open(overlay_path).convert("RGBA")
 
-    x = (background.width - overlay_width) // 2
-    y = background.height - overlay_height - 30
+    # Resize overlay based on orientation
+    if h > w:
+        overlay_width = int(w * 0.7)
+    else:
+        overlay_width = int(w * 0.5)
 
-    background.paste(selected_overlay, (x, y), selected_overlay)
-    background.save("output.png")
-    await update.message.reply_photo(photo=open("output.png", "rb"))
+    aspect_ratio = overlay.height / overlay.width
+    overlay = overlay.resize((overlay_width, int(overlay_width * aspect_ratio)))
+
+    # Paste overlay at bottom-center
+    position = ((w - overlay.width) // 2, h - overlay.height - 10)
+    image.paste(overlay, position, overlay)
+
+    image.save(output_path)
+
+    await update.message.reply_photo(photo=open(output_path, "rb"))
+
+def main():
+    import asyncio
+    TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not TOKEN:
+        raise Exception("8164820289:AAHo2gctzphWXgEVI8-B-6AlH8yaQibavvU")
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^/start"), start))
+    app.run_polling()
 
 if __name__ == "__main__":
-    token = os.getenv("TELEGRAM_BOT_TOKEN") or "8164820289:AAHo2gctzphWXgEVI8-B-6AlH8yaQibavvU"
-    app = ApplicationBuilder().token(token).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
-    app.run_polling()
+    main()
