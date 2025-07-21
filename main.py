@@ -37,7 +37,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Resize overlay based on orientation
     if h > w:
-        overlay_width = int(w * 2.2)
+        overlay_width = int(w * 1.99)
     else:
         overlay_width = int(w * 0.5)
 
