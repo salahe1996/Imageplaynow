@@ -53,7 +53,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     import asyncio
-    TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    TOKEN = os.getenv("8164820289:AAHo2gctzphWXgEVI8-B-6AlH8yaQibavvU")
     if not TOKEN:
         raise Exception("TELEGRAM_BOT_TOKEN not set in environment variables.")
     app = ApplicationBuilder().token(TOKEN).build()
