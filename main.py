@@ -36,9 +36,9 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     overlay = Image.open(overlay_path).convert("RGBA")
 
     # Resize overlay based on orientation
-    if h > w:
-        overlay_width = int(w * 1.7)
-    else:
+    if h > w:  # Portrait
+        overlay_width = int(w * 0.7)
+    else:  # Landscape
         overlay_width = int(w * 0.5)
 
     aspect_ratio = overlay.height / overlay.width
@@ -49,14 +49,13 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     image.paste(overlay, position, overlay)
 
     image.save(output_path)
-
     await update.message.reply_photo(photo=open(output_path, "rb"))
 
 def main():
     import asyncio
     TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
     if not TOKEN:
-        raise Exception("8164820289:AAHo2gctzphWXgEVI8-B-6AlH8yaQibavvU")
+        raise Exception("TELEGRAM_BOT_TOKEN not set in environment variables.")
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^/start"), start))
